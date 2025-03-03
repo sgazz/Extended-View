@@ -21,7 +21,7 @@ import SwiftUI
 struct ExtendedApp: App {
     init() {
         // Ovde možete dodati inicijalizaciju za aplikaciju
-        print("Aplikacija za pregled i rotaciju slika je pokrenuta")
+        print("Easy for one hand - aplikacija je pokrenuta")
     }
     
     var body: some Scene {
