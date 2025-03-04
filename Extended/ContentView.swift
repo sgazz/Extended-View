@@ -9,6 +9,52 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
+// Помоћна екстензија за хекс боје
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
+struct FeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.white)
+                .frame(width: 40)
+            
+            Text(text)
+                .font(.body)
+                .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.vertical, 8)
+    }
+}
+
 struct ContentView: View {
     @State private var selectedImage: UIImage?
     @State private var isImagePickerPresented = false
@@ -102,8 +148,44 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            Color(.systemBackground)
-                .edgesIgnoringSafeArea(.all)
+            // Модерни градијент background
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "1C1C1E"),
+                    Color(hex: "2C2C2E"),
+                    Color(hex: "3A3A3C")
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            // Декоративни кругови у позадини
+            GeometryReader { geometry in
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "4facfe").opacity(0.3), Color(hex: "00f2fe").opacity(0.3)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * 0.8)
+                    .offset(x: -geometry.size.width * 0.3, y: -geometry.size.height * 0.2)
+                    .blur(radius: 60)
+                
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "43e97b").opacity(0.3), Color(hex: "38f9d7").opacity(0.3)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * 0.7)
+                    .offset(x: geometry.size.width * 0.4, y: geometry.size.height * 0.4)
+                    .blur(radius: 70)
+            }
             
             if let image = selectedImage {
                 ZStack {
@@ -166,121 +248,12 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
-                VStack(spacing: verticalSizeClass == .compact ? 8 : 16) {
-                    Image(systemName: "hand.tap.fill")
-                        .font(.system(size: verticalSizeClass == .compact ? 50 : 80))
-                        .foregroundColor(.white)
-                        .padding(verticalSizeClass == .compact ? 8 : 16)
-                    
-                    Text("Easy for one hand")
-                        .font(.largeTitle)
-                        .foregroundColor(.white)
-                        .padding(verticalSizeClass == .compact ? 4 : 16)
-                    
-                    if verticalSizeClass != .compact {
-                        Text("Jednostavna manipulacija slikama\njednom rukom")
-                            .font(.title3)
-                            .foregroundColor(.white.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            FeatureRow(icon: "hand.draw.fill", text: "Intuitivne kontrole za jednu ruku")
-                            FeatureRow(icon: "arrow.clockwise", text: "Precizna rotacija sa zaključavanjem")
-                            FeatureRow(icon: "hand.tap", text: "Napredni zoom sa haptičkim feedbackom")
-                            FeatureRow(icon: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left", text: "Slobodno pomeranje slike")
-                        }
-                        .padding(.vertical, 20)
-                        .padding(.horizontal, 30)
-                        
-                        Text("Izaberite način korišćenja")
-                            .font(.title3)
-                            .foregroundColor(.white)
-                            .padding(.top, 30)
-                            .padding(.bottom, 10)
-                        
-                        HStack(spacing: 20) {
-                            Button(action: {
-                                isLeftHandMode = true
-                                hapticFeedback.impactOccurred()
-                            }) {
-                                VStack {
-                                    Image(systemName: "hand.point.left.fill")
-                                        .font(.system(size: 32))
-                                    Text("Leva ruka")
-                                        .font(.body)
-                                }
-                                .foregroundColor(.white)
-                                .frame(width: 120, height: 120)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.black.opacity(0.5))
-                                )
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .stroke(Color.white, lineWidth: 2.5)
-                                )
-                                .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                            }
-                            
-                            Button(action: {
-                                isLeftHandMode = false
-                                hapticFeedback.impactOccurred()
-                            }) {
-                                VStack {
-                                    Image(systemName: "hand.point.right.fill")
-                                        .font(.system(size: 32))
-                                    Text("Desna ruka")
-                                        .font(.body)
-                                }
-                                .foregroundColor(.white)
-                                .frame(width: 120, height: 120)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.black.opacity(0.5))
-                                )
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .stroke(Color.white, lineWidth: 2.5)
-                                )
-                                .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                            }
-                        }
-                        .padding(.bottom, 140)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            
-            VStack(spacing: 0) {
-                Spacer()
-                
-                if verticalSizeClass != .compact {
-                    Button(action: {
-                        isImagePickerPresented = true
-                    }) {
-                        Text("Izaberi sliku")
-                            .font(.system(size: selectedImage == nil ? 20 : 16, weight: .medium))
-                            .padding(.horizontal, selectedImage == nil ? 24 : 16)
-                            .padding(.vertical, selectedImage == nil ? 14 : 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.white.opacity(0.2))
-                            )
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white, lineWidth: 2.5)
-                            )
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                    }
-                    .padding(.bottom, selectedImage == nil ? 40 : 30)
-                }
+                welcomeView
             }
             
             // Plutajuća dugmad za zoom
             if selectedImage != nil {
-        VStack {
+                VStack {
                     Spacer()
                     HStack {
                         if isLeftHandMode {
@@ -291,8 +264,35 @@ struct ContentView: View {
                             zoomButtonsStack
                         }
                     }
-                    .padding(.bottom, verticalSizeClass == .compact ? 50 : 100)
                     .padding(.horizontal)
+                    
+                    // Дугме за избор нове слике (само за portrait)
+                    if verticalSizeClass != .compact {
+                        Button(action: {
+                            isImagePickerPresented = true
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "photo.on.rectangle")
+                                    .font(.headline)
+                                Text("Choose Image")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 20)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.top, 20)
+                        .padding(.bottom, verticalSizeClass == .compact ? 70 : 120)
+                    }
                 }
             }
         }
@@ -304,33 +304,169 @@ struct ContentView: View {
         }
     }
     
-    private var zoomButtonsStack: some View {
-        VStack(spacing: verticalSizeClass == .compact ? (isLargeButtonMode ? 12 : 8) : (isLargeButtonMode ? 24 : 16)) {
-            if verticalSizeClass == .compact {
-                Button(action: {
-                    isImagePickerPresented = true
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.system(size: 20))
-                        Text("Izaberi sliku")
-                            .font(.system(size: 16, weight: .medium))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.black.opacity(0.5))
+    private var welcomeView: some View {
+        ZStack {
+            // Модерни градијент background
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "1C1C1E"),
+                    Color(hex: "2C2C2E"),
+                    Color(hex: "3A3A3C")
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            // Декоративни кругови у позадини
+            GeometryReader { geometry in
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "4facfe").opacity(0.3), Color(hex: "00f2fe").opacity(0.3)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white, lineWidth: 2.5)
+                    .frame(width: geometry.size.width * 0.8)
+                    .offset(x: -geometry.size.width * 0.3, y: -geometry.size.height * 0.2)
+                    .blur(radius: 60)
+                
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "43e97b").opacity(0.3), Color(hex: "38f9d7").opacity(0.3)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                }
+                    .frame(width: geometry.size.width * 0.7)
+                    .offset(x: geometry.size.width * 0.4, y: geometry.size.height * 0.4)
+                    .blur(radius: 70)
             }
             
+            // Главни садржај
+            VStack(spacing: verticalSizeClass == .compact ? 8 : 16) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: verticalSizeClass == .compact ? 50 : 80))
+                    .foregroundStyle(.linearGradient(
+                        colors: [.white, .white.opacity(0.7)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ))
+                    .padding(verticalSizeClass == .compact ? 8 : 16)
+                
+                Text("Easy for one hand")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(.linearGradient(
+                        colors: [.white, .white.opacity(0.9)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    .padding(verticalSizeClass == .compact ? 4 : 16)
+                
+                if verticalSizeClass != .compact {
+                    Text("Advanced image manipulation\nwith one touch")
+                        .font(.title3)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    VStack(alignment: .leading, spacing: 16) {
+                        FeatureRow(icon: "hand.tap.fill", text: "Tailored for one-handed use")
+                        FeatureRow(icon: "rotate.3d", text: "Precise rotation")
+                        FeatureRow(icon: "magnifyingglass.circle.fill", text: "Smart zoom")
+                        FeatureRow(icon: "hand.draw.fill", text: "Intuitive movement and positioning")
+                    }
+                    .padding(.vertical, 30)
+                    .padding(.horizontal, 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(Color.white.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 20)
+                    
+                    // Дугмад за избор руке
+                    HStack(spacing: 20) {
+                        Button(action: {
+                            isLeftHandMode = true
+                            hapticFeedback.impactOccurred()
+                        }) {
+                            Text("Left Hand")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 20)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color(hex: "43e97b"), Color(hex: "38f9d7")]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .shadow(color: Color(hex: "43e97b").opacity(0.5), radius: 10, x: 0, y: 5)
+                                .opacity(isLeftHandMode ? 1 : 0.6)
+                        }
+                        
+                        Button(action: {
+                            isLeftHandMode = false
+                            hapticFeedback.impactOccurred()
+                        }) {
+                            Text("Right Hand")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 20)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color(hex: "43e97b"), Color(hex: "38f9d7")]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .shadow(color: Color(hex: "43e97b").opacity(0.5), radius: 10, x: 0, y: 5)
+                                .opacity(isLeftHandMode ? 0.6 : 1)
+                        }
+                    }
+                    .padding(.top, 40)
+                    
+                    // Дугме за избор слике
+                    Button(action: {
+                        isImagePickerPresented = true
+                    }) {
+                        Text("Choose Image")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 20)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                    }
+                    .padding(.top, 20)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .onTapGesture {
+            isImagePickerPresented = true
+        }
+    }
+    
+    private var zoomButtonsStack: some View {
+        VStack(spacing: verticalSizeClass == .compact ? (isLargeButtonMode ? 12 : 8) : (isLargeButtonMode ? 24 : 16)) {
             // Reset rotacije dugme
             if abs(rotationAngle) > 0.1 {
                 Button(action: {
@@ -549,6 +685,33 @@ struct ContentView: View {
                     hapticFeedback.impactOccurred()
                 }
             }
+
+            // Choose Image dugme (samo za landscape)
+            if verticalSizeClass == .compact {
+                Button(action: {
+                    isImagePickerPresented = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.headline)
+                        Text("Choose Image")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 20)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                }
+                .padding(.top, 20)
+            }
         }
         .padding(.vertical, verticalSizeClass == .compact ? (isLargeButtonMode ? 8 : 4) : (isLargeButtonMode ? 16 : 8))
     }
@@ -703,24 +866,6 @@ struct ImagePicker: UIViewControllerRepresentable {
                     }
                 }
             }
-        }
-    }
-}
-
-struct FeatureRow: View {
-    let icon: String
-    let text: String
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(.white)
-                .frame(width: 32)
-            
-            Text(text)
-                .font(.body)
-                .foregroundColor(.white.opacity(0.9))
         }
     }
 }
