@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 import UIKit
+import CoreMotion
 
 // Помоћна екстензија за хекс боје
 extension Color {
@@ -80,6 +81,7 @@ struct ContentView: View {
     @State private var isRotating: Bool = false
     @State private var isAngleSnappingEnabled: Bool = true
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @StateObject private var tiltController = TiltController()
     
     // Konstante za kontrolu zuma i haptike
     private let zoomInFactor: CGFloat = 1.5
@@ -189,51 +191,76 @@ struct ContentView: View {
             
             if let image = selectedImage {
                 ZStack {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .rotationEffect(.degrees(rotationAngle))
-                        .scaleEffect(scale)
-                        .offset(offset)
-                        .gesture(
-                            RotationGesture()
-                                .onChanged { angle in
-                                    rotationAngle = angle.degrees
-                                    if isAngleSnappingEnabled {
-                                        let snappedAngle = snapToNearestAngle(rotationAngle)
-                                        if abs(rotationAngle - snappedAngle) < 10 {
-                                            rotationAngle = snappedAngle
-                                            mediumHaptic.impactOccurred()
+                    GeometryReader { geometry in
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .rotationEffect(.degrees(rotationAngle))
+                            .scaleEffect(scale)
+                            .offset(offset)
+                            .offset(tiltController.offset)
+                            .onChange(of: scale) { newScale in
+                                let imageSize = CGSize(
+                                    width: image.size.width,
+                                    height: image.size.height
+                                )
+                                tiltController.updateDimensions(
+                                    imageSize: imageSize,
+                                    viewSize: geometry.size,
+                                    scale: newScale
+                                )
+                            }
+                            .onAppear {
+                                let imageSize = CGSize(
+                                    width: image.size.width,
+                                    height: image.size.height
+                                )
+                                tiltController.updateDimensions(
+                                    imageSize: imageSize,
+                                    viewSize: geometry.size,
+                                    scale: scale
+                                )
+                            }
+                            .gesture(
+                                RotationGesture()
+                                    .onChanged { angle in
+                                        rotationAngle = angle.degrees
+                                        if isAngleSnappingEnabled {
+                                            let snappedAngle = snapToNearestAngle(rotationAngle)
+                                            if abs(rotationAngle - snappedAngle) < 10 {
+                                                rotationAngle = snappedAngle
+                                                mediumHaptic.impactOccurred()
+                                            }
+                                        }
+                                        showRotationIndicator = true
+                                        isChangingValue = true
+                                        lightHaptic.impactOccurred(intensity: 0.3)
+                                    }
+                                    .onEnded { _ in
+                                        if isAngleSnappingEnabled {
+                                            withAnimation(.spring()) {
+                                                rotationAngle = snapToNearestAngle(rotationAngle)
+                                            }
+                                        }
+                                        isChangingValue = false
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + indicatorDisplayDuration) {
+                                            showRotationIndicator = false
                                         }
                                     }
-                                    showRotationIndicator = true
-                                    isChangingValue = true
-                                    lightHaptic.impactOccurred(intensity: 0.3)
-                                }
-                                .onEnded { _ in
-                                    if isAngleSnappingEnabled {
-                                        withAnimation(.spring()) {
-                                            rotationAngle = snapToNearestAngle(rotationAngle)
-                                        }
+                            )
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { gesture in
+                                        offset = CGSize(
+                                            width: lastOffset.width + gesture.translation.width,
+                                            height: lastOffset.height + gesture.translation.height
+                                        )
                                     }
-                                    isChangingValue = false
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + indicatorDisplayDuration) {
-                                        showRotationIndicator = false
+                                    .onEnded { _ in
+                                        lastOffset = offset
                                     }
-                                }
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    offset = CGSize(
-                                        width: lastOffset.width + gesture.translation.width,
-                                        height: lastOffset.height + gesture.translation.height
-                                    )
-                                }
-                                .onEnded { _ in
-                                    lastOffset = offset
-                                }
-                        )
+                            )
+                    }
                     
                     // Overlay za indikatore
                     VStack(alignment: .leading) {
@@ -251,20 +278,21 @@ struct ContentView: View {
                 welcomeView
             }
             
-            // Plutajuća dugmad za zoom
+            // Zoom и тилт контроле
             if selectedImage != nil {
                 VStack {
                     Spacer()
                     HStack {
                         if isLeftHandMode {
-                            zoomButtonsStack
+                            controlsStack
                             Spacer()
                         } else {
                             Spacer()
-                            zoomButtonsStack
+                            controlsStack
                         }
                     }
                     .padding(.horizontal)
+                    .padding(.bottom, verticalSizeClass == .compact ? 8 : 16)
                     
                     // Дугме за избор нове слике (само за portrait)
                     if verticalSizeClass != .compact {
@@ -463,6 +491,20 @@ struct ContentView: View {
         .onTapGesture {
             isImagePickerPresented = true
         }
+    }
+    
+    private var controlsStack: some View {
+        VStack(spacing: verticalSizeClass == .compact ? (isLargeButtonMode ? 12 : 8) : (isLargeButtonMode ? 24 : 16)) {
+            // Тилт дугме
+            TiltButton(tiltController: tiltController)
+                .frame(width: isLargeButtonMode ? largeButtonSize : standardButtonSize,
+                       height: isLargeButtonMode ? largeButtonSize : standardButtonSize)
+                .padding(.bottom, verticalSizeClass == .compact ? 20 : 40)
+
+            // Постојеће контроле
+            zoomButtonsStack
+        }
+        .padding(.vertical, verticalSizeClass == .compact ? (isLargeButtonMode ? 8 : 4) : (isLargeButtonMode ? 16 : 8))
     }
     
     private var zoomButtonsStack: some View {
