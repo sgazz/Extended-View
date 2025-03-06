@@ -19,11 +19,6 @@ import SwiftUI
 
 @main
 struct ExtendedApp: App {
-    init() {
-        // Ovde možete dodati inicijalizaciju za aplikaciju
-        print("Easy for one hand - aplikacija je pokrenuta")
-    }
-    
     var body: some Scene {
         WindowGroup {
             ContentView()

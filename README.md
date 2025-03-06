@@ -20,14 +20,29 @@ Aplikacija za pregled i manipulaciju slikama na iOS uređajima.
 - Pomeranje slike prevlačenjem
   - Slobodno pomeranje u svim pravcima
   - Automatsko centriranje pri resetovanju
+- Tilt kontrola (Senzor pokreta)
+  - Intuitivno naginjanje slike pomoću ugrađenih senzora
+  - Prilagodljiva osetljivost nagiba
+  - Mogućnost zaključavanja horizontalne ili vertikalne ose
 - Podrška za levoruke i desnoruke korisnike
   - Prilagodljiv raspored kontrola
   - Intuitivno pozicioniranje dugmadi
+  - Optimizovan raspored za jednoruko korišćenje
 - Moderni korisnički interfejs
   - Elegantni dizajn sa transparentnim elementima
   - Vizuelni indikatori za sve akcije
   - Responzivna dugmad sa animacijama
-  - Adaptivni layout za različite orijentacije
+  - Adaptivni layout za različite orijentacije ekrana
+  - Kompaktni i intuitivni kontrolni elementi
+  - Automatsko prilagođavanje za portrait i landscape orijentaciju
+
+## Poboljšanja u poslednjoj verziji
+
+- Optimizovano pozicioniranje i centriranje slike
+- Kompaktnija kontrolna dugmad sa boljom vizuelnom hijerarhijom
+- Poboljšan layout za landscape orijentaciju
+- Bolja dostupnost kontrola za jednoručno korišćenje
+- Redizajniran interfejs sa fokusiranim kontrolama
 
 ## Tehnički detalji
 
@@ -37,6 +52,7 @@ Aplikacija za pregled i manipulaciju slikama na iOS uređajima.
 - Optimizovano za jednoruko korišćenje
 - Napredni sistem za haptički fidbek
 - Gesture recognizers za intuitivnu kontrolu
+- CoreMotion za Tilt funkcionalnost
 
 ## Razvoj
 
