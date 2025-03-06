@@ -192,85 +192,89 @@ struct ContentView: View {
             if let image = selectedImage {
                 ZStack {
                     GeometryReader { geometry in
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .rotationEffect(.degrees(rotationAngle))
-                            .scaleEffect(scale)
-                            .offset(offset)
-                            .offset(tiltController.offset)
-                            .onChange(of: scale) { newScale in
-                                let imageSize = CGSize(
-                                    width: image.size.width,
-                                    height: image.size.height
-                                )
-                                tiltController.updateDimensions(
-                                    imageSize: imageSize,
-                                    viewSize: geometry.size,
-                                    scale: newScale
-                                )
-                            }
-                            .onAppear {
-                                let imageSize = CGSize(
-                                    width: image.size.width,
-                                    height: image.size.height
-                                )
-                                tiltController.updateDimensions(
-                                    imageSize: imageSize,
-                                    viewSize: geometry.size,
-                                    scale: scale
-                                )
-                            }
-                            .gesture(
-                                RotationGesture()
-                                    .onChanged { angle in
-                                        rotationAngle = angle.degrees
-                                        if isAngleSnappingEnabled {
-                                            let snappedAngle = snapToNearestAngle(rotationAngle)
-                                            if abs(rotationAngle - snappedAngle) < 10 {
-                                                rotationAngle = snappedAngle
-                                                mediumHaptic.impactOccurred()
+                        ZStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .rotationEffect(.degrees(rotationAngle))
+                                .scaleEffect(scale)
+                                .offset(offset)
+                                .offset(tiltController.offset)
+                                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
+                                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                                .onChange(of: scale) { newScale in
+                                    let imageSize = CGSize(
+                                        width: image.size.width,
+                                        height: image.size.height
+                                    )
+                                    tiltController.updateDimensions(
+                                        imageSize: imageSize,
+                                        viewSize: geometry.size,
+                                        scale: newScale
+                                    )
+                                }
+                                .onAppear {
+                                    let imageSize = CGSize(
+                                        width: image.size.width,
+                                        height: image.size.height
+                                    )
+                                    tiltController.updateDimensions(
+                                        imageSize: imageSize,
+                                        viewSize: geometry.size,
+                                        scale: scale
+                                    )
+                                }
+                                .gesture(
+                                    RotationGesture()
+                                        .onChanged { angle in
+                                            rotationAngle = angle.degrees
+                                            if isAngleSnappingEnabled {
+                                                let snappedAngle = snapToNearestAngle(rotationAngle)
+                                                if abs(rotationAngle - snappedAngle) < 10 {
+                                                    rotationAngle = snappedAngle
+                                                    mediumHaptic.impactOccurred()
+                                                }
+                                            }
+                                            showRotationIndicator = true
+                                            isChangingValue = true
+                                            lightHaptic.impactOccurred(intensity: 0.3)
+                                        }
+                                        .onEnded { _ in
+                                            if isAngleSnappingEnabled {
+                                                withAnimation(.spring()) {
+                                                    rotationAngle = snapToNearestAngle(rotationAngle)
+                                                }
+                                            }
+                                            isChangingValue = false
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + indicatorDisplayDuration) {
+                                                showRotationIndicator = false
                                             }
                                         }
-                                        showRotationIndicator = true
-                                        isChangingValue = true
-                                        lightHaptic.impactOccurred(intensity: 0.3)
-                                    }
-                                    .onEnded { _ in
-                                        if isAngleSnappingEnabled {
-                                            withAnimation(.spring()) {
-                                                rotationAngle = snapToNearestAngle(rotationAngle)
-                                            }
+                                )
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { gesture in
+                                            offset = CGSize(
+                                                width: lastOffset.width + gesture.translation.width,
+                                                height: lastOffset.height + gesture.translation.height
+                                            )
                                         }
-                                        isChangingValue = false
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + indicatorDisplayDuration) {
-                                            showRotationIndicator = false
+                                        .onEnded { _ in
+                                            lastOffset = offset
                                         }
-                                    }
-                            )
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { gesture in
-                                        offset = CGSize(
-                                            width: lastOffset.width + gesture.translation.width,
-                                            height: lastOffset.height + gesture.translation.height
-                                        )
-                                    }
-                                    .onEnded { _ in
-                                        lastOffset = offset
-                                    }
-                            )
-                    }
-                    
-                    // Overlay za indikatore
-                    VStack(alignment: .leading) {
-                        rotationIndicatorOverlay
-                            .padding(.horizontal)
-                            .padding(.top, verticalSizeClass == .compact ? 8 : 16)
-                        Spacer()
-                        zoomIndicatorOverlay
-                            .padding(.horizontal)
-                            .padding(.bottom, verticalSizeClass == .compact ? 8 : 16)
+                                )
+                        }
+                        
+                        // Overlay za indikatore
+                        VStack(alignment: .leading) {
+                            rotationIndicatorOverlay
+                                .padding(.horizontal)
+                                .padding(.top, verticalSizeClass == .compact ? 8 : 16)
+                            Spacer()
+                            zoomIndicatorOverlay
+                                .padding(.horizontal)
+                                .padding(.bottom, verticalSizeClass == .compact ? 8 : 16)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -299,27 +303,24 @@ struct ContentView: View {
                         Button(action: {
                             isImagePickerPresented = true
                         }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "photo.on.rectangle")
-                                    .font(.headline)
-                                Text("Choose Image")
-                                    .font(.headline)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 150, height: 50)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
                                 )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                                .shadow(color: Color(hex: "4facfe").opacity(0.4), radius: 6, x: 0, y: 3)
                         }
-                        .padding(.top, 20)
-                        .padding(.bottom, verticalSizeClass == .compact ? 70 : 120)
+                        .padding(.top, 10)
+                        .padding(.bottom, verticalSizeClass == .compact ? 20 : 60)
                     }
                 }
             }
@@ -464,29 +465,63 @@ struct ContentView: View {
                     }
                     .padding(.top, 40)
                     
-                    // Дугме за избор слике
-                    Button(action: {
-                        isImagePickerPresented = true
-                    }) {
-                        Text("Choose Image")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                    // Дугме за избор слике - само за portrait
+                    if verticalSizeClass != .compact {
+                        Button(action: {
+                            isImagePickerPresented = true
+                        }) {
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 150, height: 50)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
                                 )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                                .shadow(color: Color(hex: "4facfe").opacity(0.4), radius: 6, x: 0, y: 3)
+                        }
+                        .padding(.top, 20)
+                        .padding(.bottom, 20)
                     }
-                    .padding(.top, 20)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Дугме за избор слике у landscape оријентацији
+            if verticalSizeClass == .compact {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            isImagePickerPresented = true
+                        }) {
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 150, height: 50)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                                .shadow(color: Color(hex: "4facfe").opacity(0.4), radius: 6, x: 0, y: 3)
+                        }
+                        .padding(20)
+                    }
+                }
+            }
         }
         .onTapGesture {
             isImagePickerPresented = true
@@ -727,32 +762,28 @@ struct ContentView: View {
                     hapticFeedback.impactOccurred()
                 }
             }
-
-            // Choose Image dugme (samo za landscape)
+            
+            // Дугме за избор слике у landscape оријентацији
             if verticalSizeClass == .compact {
                 Button(action: {
                     isImagePickerPresented = true
                 }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.headline)
-                        Text("Choose Image")
-                            .font(.headline)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 20)
-                    .background(
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color(hex: "4facfe"), Color(hex: "00f2fe")]),
-                            startPoint: .leading,
-                            endPoint: .trailing
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: isLargeButtonMode ? 24 : 20))
+                        .frame(width: isLargeButtonMode ? largeButtonSize : standardButtonSize,
+                              height: isLargeButtonMode ? largeButtonSize : standardButtonSize)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.5))
                         )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .shadow(color: Color(hex: "4facfe").opacity(0.5), radius: 10, x: 0, y: 5)
+                        .background(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2.5)
+                        )
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
                 }
-                .padding(.top, 20)
+                .padding(.top, 8)
             }
         }
         .padding(.vertical, verticalSizeClass == .compact ? (isLargeButtonMode ? 8 : 4) : (isLargeButtonMode ? 16 : 8))
