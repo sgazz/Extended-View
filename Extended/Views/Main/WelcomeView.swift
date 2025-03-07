@@ -30,6 +30,10 @@ struct FeatureRow: View {
 struct WelcomeView: View {
     @Binding var selectedImage: UIImage?
     @Binding var isImagePickerPresented: Bool
+    @Binding var isLeftHandMode: Bool
+    
+    // Хаптички фидбек
+    private let hapticFeedback = UIImpactFeedbackGenerator(style: .medium)
     
     var body: some View {
         ZStack {
@@ -57,6 +61,68 @@ struct WelcomeView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
                 .padding(.top, 50)
+                
+                // Избор начина коришћења (лево/десноруки)
+                VStack(spacing: 15) {
+                    Text("Изаберите начин коришћења")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 20) {
+                        // Дугме за леворуки начин
+                        Button(action: {
+                            isLeftHandMode = true
+                            hapticFeedback.impactOccurred(intensity: 0.7)
+                        }) {
+                            VStack {
+                                Image(systemName: "hand.point.left.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 5)
+                                
+                                Text("Леворуки")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 120, height: 120)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
+                            )
+                        }
+                        
+                        // Дугме за десноруки начин
+                        Button(action: {
+                            isLeftHandMode = false
+                            hapticFeedback.impactOccurred(intensity: 0.7)
+                        }) {
+                            VStack {
+                                Image(systemName: "hand.point.right.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 5)
+                                
+                                Text("Десноруки")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 120, height: 120)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(!isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(!isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
+                            )
+                        }
+                    }
+                }
+                .padding(.vertical, 20)
                 
                 Spacer()
                 
@@ -118,6 +184,7 @@ struct WelcomeView: View {
 #Preview {
     WelcomeView(
         selectedImage: .constant(nil),
-        isImagePickerPresented: .constant(false)
+        isImagePickerPresented: .constant(false),
+        isLeftHandMode: .constant(false)
     )
 } 

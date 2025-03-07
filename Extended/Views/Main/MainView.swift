@@ -72,7 +72,8 @@ struct MainView: View {
                 // Почетни екран
                 WelcomeView(
                     selectedImage: $selectedImage,
-                    isImagePickerPresented: $isImagePickerPresented
+                    isImagePickerPresented: $isImagePickerPresented,
+                    isLeftHandMode: $isLeftHandMode
                 )
             }
             
