@@ -199,7 +199,7 @@ struct ContentView: View {
                             .scaleEffect(scale)
                             .offset(offset)
                             .offset(tiltController.offset)
-                            .onChange(of: scale) { newScale in
+                            .onChange(of: scale) { oldScale, newScale in
                                 let imageSize = CGSize(
                                     width: image.size.width,
                                     height: image.size.height
@@ -333,7 +333,7 @@ struct ContentView: View {
         .sheet(isPresented: $isImagePickerPresented) {
             ImagePicker(selectedImage: $selectedImage)
         }
-        .onChange(of: selectedImage) { _ in
+        .onChange(of: selectedImage) { oldImage, newImage in
             // Центрирамо слику када се изабере нова
             centerImage()
         }
