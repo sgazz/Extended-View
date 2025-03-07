@@ -220,6 +220,9 @@ struct ContentView: View {
                                     viewSize: geometry.size,
                                     scale: scale
                                 )
+                                
+                                // Центрирамо слику када се учита
+                                centerImage()
                             }
                             .gesture(
                                 RotationGesture()
@@ -329,6 +332,10 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImagePicker(selectedImage: $selectedImage)
+        }
+        .onChange(of: selectedImage) { _ in
+            // Центрирамо слику када се изабере нова
+            centerImage()
         }
     }
     
@@ -866,6 +873,17 @@ struct ContentView: View {
     private func cleanup() {
         stopContinuousZoom()
         stopContinuousRotation()
+    }
+    
+    // Додајем функцију за центрирање слике
+    private func centerImage() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            scale = 1.0
+            rotationAngle = 0.0
+            offset = .zero
+            lastOffset = .zero
+            isMaxZoomed = false
+        }
     }
 }
 
