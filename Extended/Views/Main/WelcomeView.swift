@@ -49,6 +49,7 @@ struct WelcomeView: View {
             )
             .ignoresSafeArea()
             
+            // Главни садржај
             VStack(spacing: 30) {
                 // Наслов апликације
                 VStack(spacing: 10) {
@@ -61,70 +62,6 @@ struct WelcomeView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
                 .padding(.top, 50)
-                
-                // Избор начина коришћења (лево/десноруки)
-                VStack(spacing: 15) {
-                    Text("Изаберите начин коришћења")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    HStack(spacing: 20) {
-                        // Дугме за леворуки начин
-                        Button(action: {
-                            isLeftHandMode = true
-                            hapticFeedback.impactOccurred(intensity: 0.7)
-                        }) {
-                            VStack {
-                                Image(systemName: "hand.point.left.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .padding(.bottom, 5)
-                                
-                                Text("Леворуки")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 120, height: 120)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
-                            )
-                        }
-                        
-                        // Дугме за десноруки начин
-                        Button(action: {
-                            isLeftHandMode = false
-                            hapticFeedback.impactOccurred(intensity: 0.7)
-                        }) {
-                            VStack {
-                                Image(systemName: "hand.point.right.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .padding(.bottom, 5)
-                                
-                                Text("Десноруки")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 120, height: 120)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(!isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(!isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
-                            )
-                        }
-                    }
-                }
-                .padding(.vertical, 20)
-                
-                Spacer()
                 
                 // Листа функција
                 VStack(alignment: .leading, spacing: 5) {
@@ -148,35 +85,121 @@ struct WelcomeView: View {
                 .padding(.horizontal)
                 
                 Spacer()
+            }
+            .padding()
+            
+            // Дугмад у Green Thumb Zone
+            VStack {
+                Spacer()
                 
-                // Дугме за избор слике
-                Button(action: {
-                    isImagePickerPresented = true
-                }) {
-                    HStack {
+                // Избор начина коришћења (лево/десноруки)
+                HStack {
+                    if isLeftHandMode {
+                        // Леворуки распоред - дугмад на левој страни
+                        thumbZoneButtons
+                        Spacer()
+                    } else {
+                        // Десноруки распоред - дугмад на десној страни
+                        Spacer()
+                        thumbZoneButtons
+                    }
+                }
+                .padding(.bottom, 30)
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+    
+    // Дугмад у Green Thumb Zone
+    private var thumbZoneButtons: some View {
+        VStack(alignment: isLeftHandMode ? .leading : .trailing, spacing: 20) {
+            // Дугме за избор слике
+            Button(action: {
+                isImagePickerPresented = true
+                hapticFeedback.impactOccurred(intensity: 0.7)
+            }) {
+                HStack {
+                    if isLeftHandMode {
                         Image(systemName: "photo")
                             .font(.title2)
                         
                         Text("Изаберите слику")
                             .font(.title3)
                             .fontWeight(.semibold)
+                    } else {
+                        Text("Изаберите слику")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        
+                        Image(systemName: "photo")
+                            .font(.title2)
                     }
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
+                }
+                .foregroundColor(.white)
+                .padding()
+                .frame(width: 250)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.2))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                )
+            }
+            
+            // Дугмад за избор начина коришћења
+            HStack(spacing: 15) {
+                // Дугме за леворуки начин
+                Button(action: {
+                    isLeftHandMode = true
+                    hapticFeedback.impactOccurred(intensity: 0.7)
+                }) {
+                    VStack {
+                        Image(systemName: "hand.point.left.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                        
+                        Text("Леворуки")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 80, height: 80)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white.opacity(0.2))
+                        Circle()
+                            .fill(isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                        Circle()
+                            .stroke(isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
                     )
                 }
-                .padding(.horizontal, 30)
-                .padding(.bottom, 50)
+                
+                // Дугме за десноруки начин
+                Button(action: {
+                    isLeftHandMode = false
+                    hapticFeedback.impactOccurred(intensity: 0.7)
+                }) {
+                    VStack {
+                        Image(systemName: "hand.point.right.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                        
+                        Text("Десноруки")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 80, height: 80)
+                    .background(
+                        Circle()
+                            .fill(!isLeftHandMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(!isLeftHandMode ? Color.white : Color.white.opacity(0.3), lineWidth: 2)
+                    )
+                }
             }
-            .padding()
         }
     }
 }
