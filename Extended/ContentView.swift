@@ -199,6 +199,8 @@ struct ContentView: View {
                             .scaleEffect(scale)
                             .offset(offset)
                             .offset(tiltController.offset)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                             .onChange(of: scale) { oldScale, newScale in
                                 let imageSize = CGSize(
                                     width: image.size.width,
@@ -221,8 +223,10 @@ struct ContentView: View {
                                     scale: scale
                                 )
                                 
-                                // Центрирамо слику када се учита
-                                centerImage()
+                                // Експлицитно центрирамо слику када се учита
+                                DispatchQueue.main.async {
+                                    centerImage()
+                                }
                             }
                             .gesture(
                                 RotationGesture()
@@ -883,6 +887,11 @@ struct ContentView: View {
             offset = .zero
             lastOffset = .zero
             isMaxZoomed = false
+            
+            // Осигуравамо да се тилт контролер такође ресетује
+            if tiltController.isTiltActive {
+                tiltController.stopTilt()
+            }
         }
     }
 }
